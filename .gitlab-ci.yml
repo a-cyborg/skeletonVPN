@@ -1,0 +1,28 @@
+image: skullxxx/rust_x_android
+
+before_script:
+  - chmod +x ./gradlew
+
+# Check linting.
+lintDebug:
+  interruptible: true
+  stage: build
+  script:
+    - ./gradlew -Pci --console=plain :app:lintDebug -PbuildDir=lint
+
+# Build android apk.
+build-android-vpn:
+  interruptible: true
+  stage: build
+  script:
+    - ./gradlew assembleDebug
+    - mkdir results && cp app/build/outputs/apk/debug/app-debug.apk results/skeletonvpn-debug.apk
+  artifacts:
+    paths:
+      - results/*
+
+# Run all tests.
+debugTests:
+  stage: test
+  script:
+    - ./gradlew -Pci --console=plain :app:testDebug
