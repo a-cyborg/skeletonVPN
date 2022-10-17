@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">SkeletonVpn</string>
+    <string name="permission_denied">Permission denied.</string>
+    <string name="connect">Connect</string>
+    <string name="disconnect">Disconnet</string>
+    <string name="connecting">Connecting...</string>
+    <string name="connected">Connected.</string>
+</resources>
