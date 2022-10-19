@@ -13,15 +13,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 class MainActivity : AppCompatActivity() {
     private val TAG = this@MainActivity::class.java.simpleName
 
-    private val permissionActivityLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            startService(getService().setAction(SkeletonVpnService.ACTION_CONNECT))
-        } else {
-            Toast.makeText(this, R.string.permission_denied, Toast.LENGTH_LONG).show()
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -40,6 +31,15 @@ class MainActivity : AppCompatActivity() {
 
     fun stopVPN(view: View) {
         startService(getService().setAction(SkeletonVpnService.ACTION_DISCONNECT))
+    }
+
+    private val permissionActivityLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            startService(getService().setAction(SkeletonVpnService.ACTION_CONNECT))
+        } else {
+            Toast.makeText(this, R.string.permission_denied, Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun getService() = Intent(this, SkeletonVpnService::class.java)
