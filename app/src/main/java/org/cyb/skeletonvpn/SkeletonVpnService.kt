@@ -1,15 +1,9 @@
 package org.cyb.skeletonvpn
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Intent
 import android.net.VpnService
-import android.os.Build
 import android.os.ParcelFileDescriptor
-import android.util.Log
-import androidx.core.app.NotificationCompat
-import java.io.IOException
+import org.cyb.skeletonvpn.util.NotificationHelper
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
@@ -17,17 +11,18 @@ class SkeletonVpnService : VpnService() {
     private val TAG = this@SkeletonVpnService::class.java.simpleName
 
     private val connectionId = AtomicInteger(1)
-    private val connectionThread = AtomicReference<Thread>()
-    private val connection = AtomicReference<Pair<Thread, ParcelFileDescriptor>>()
+    private val connectionRef = AtomicReference<Thread>()
+    private val connectionAndTunRef = AtomicReference<Pair<Thread, ParcelFileDescriptor>>()
+
+    private var notificationHelper: NotificationHelper = NotificationHelper(this)
 
     companion object {
-        const val ACTION_CONNECT = "SKELETON_VPN_CONNECT"
-        const val ACTION_DISCONNECT = "SKELETON_VPN_DISCONNECT"
+        const val CONNECT_ACTION = "SKELETON_VPN_CONNECT"
+        const val DISCONNECT_ACTION = "SKELETON_VPN_DISCONNECT"
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        return if (intent?.action == ACTION_DISCONNECT) {
-            Log.d(TAG, "onStartCommand: Disconnect")
+        return if (intent?.action == DISCONNECT_ACTION) {
             disconnect()
             START_NOT_STICKY
         } else {
@@ -40,40 +35,36 @@ class SkeletonVpnService : VpnService() {
         // Become a foreground service.
         updateForegroundNotification(R.string.connecting)
 
+        // TODO: Refactoring - DevMode hard coded parameters
         val connection = SkeletonVpnConnection(
             this,
             connectionId.getAndIncrement(),
-            "", // server address.
-            0, // Port.
-            "Secret", // shared secret.
+            "192.168.45.33",
+            8000,
+            "0justtwoofus", // shared secret.
         )
 
         Thread(connection, "SkeletonVpnThread").run {
-            setConnectingThread(this) // Check if we have any dangled thread.
+            setConnectionReference(this) // Check if we have any dangled thread.
 
             connection.setOnConnectionListener { tunInterface ->
-                // Vpn tunnel is established.
                 updateForegroundNotification(R.string.connected)
-                connectionThread.compareAndSet(this, null)
-                setConnection(Pair(this, tunInterface))
+                connectionRef.compareAndSet(this, null)
+                setConnectionAndTunReference(Pair(this, tunInterface))
             }
-            start()}
+
+            start()
+        }
     }
 
-    private fun setConnectingThread(thr: Thread?) {
-        // Replace any existing connection thread with the new one.
-        connectionThread.getAndSet(thr)?.interrupt()
+    private fun setConnectionReference(newThread: Thread?) {
+        connectionRef.getAndSet(newThread)?.interrupt()
     }
 
-    private fun setConnection(connection: Pair<Thread, ParcelFileDescriptor>?) {
-        this.connection.getAndSet(connection)?.run {
-            try {
-                Log.i(TAG, "setConnection: Closing tun interface [ " + second + "]")
-                first.interrupt()
-                second.close()
-            } catch (e: IOException) {
-                Log.e(TAG, "setConnection: Closing tun interface", e)
-            }
+    private fun setConnectionAndTunReference(newPair: Pair<Thread, ParcelFileDescriptor>?) {
+        connectionAndTunRef.getAndSet(newPair)?.let {
+            it.first.interrupt()
+            it.second.close()
         }
     }
 
@@ -82,33 +73,13 @@ class SkeletonVpnService : VpnService() {
     }
 
     private fun disconnect() {
-        setConnectingThread(null)
-        setConnection(null)
+        setConnectionReference(null)
+        setConnectionAndTunReference(null)
         stopForeground(true)
     }
 
     private fun updateForegroundNotification(msg: Int) {
-        val NOTIFICATION_CHANNEL_ID = "Skeleton_Vpn"
-
-        // From Android 8.0 notification channel must be created.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            (getSystemService(NOTIFICATION_SERVICE) as NotificationManager)
-                .createNotificationChannel(
-                    NotificationChannel(
-                        NOTIFICATION_CHANNEL_ID,
-                        NOTIFICATION_CHANNEL_ID,
-                        NotificationManager.IMPORTANCE_DEFAULT))
-        }
-
-        startForeground(333, NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle("\uD83D\uDC80")
-            .setContentText(getString(msg))
-            .setSmallIcon(androidx.loader.R.drawable.notification_bg)
-            .setContentIntent(PendingIntent.getActivity(
-                this,
-                0,
-                Intent(this,MainActivity::class.java),
-                PendingIntent.FLAG_UPDATE_CURRENT))
-            .build())
+        val notification = notificationHelper.getNotification(msg)
+        startForeground(333, notification)
     }
 }

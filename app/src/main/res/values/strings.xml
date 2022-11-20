@@ -5,4 +5,7 @@
     <string name="disconnect">Disconnet</string>
     <string name="connecting">Connecting...</string>
     <string name="connected">Connected.</string>
+    <string name="SkeletonVpn_is_disconnected">Skeleton vpn is disconnected.</string>
+    <string name="check_your_network_connection_and_try_again">Please check your network connection and try again.</string>
+    <string name="Error">An error occurred.</string>
 </resources>
