@@ -8,4 +8,9 @@
     <string name="SkeletonVpn_is_disconnected">Skeleton vpn is disconnected.</string>
     <string name="check_your_network_connection_and_try_again">Please check your network connection and try again.</string>
     <string name="Error">An error occurred.</string>
+    <string name="header_emoji">💀</string>
+    <string name="pirate_emoji">☠</string>
+    <string name="server_address">Server address</string>
+    <string name="port_number">Port number</string>
+    <string name="secret">Shared secret</string>
 </resources>
