@@ -4,8 +4,8 @@
 
 # Change belows as you wish.
 TUN_NAME="tun0"
-SRC_ADDR="10.0.0.1/24"
-DEST_ADDR="10.0.0.2/24"
+SRC_ADDR="10.0.0.1/32"
+DEST_ADDR="10.0.0.2/32"
 
 echo "🐝 Setting up the tun interface \n
     | name = $TUN_NAME | source address = $SRC_ADDR | destination address = $DEST_ADDR |"
