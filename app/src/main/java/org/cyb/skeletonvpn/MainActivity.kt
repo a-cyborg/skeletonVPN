@@ -24,13 +24,13 @@ class MainActivity : AppCompatActivity() {
         // If user hasn't given permission `VpnService.prepare()` returns an activity intent.
         VpnService.prepare(this)
             ?.let { intent -> permissionActivityLauncherForResult.launch(intent) }
-            ?: run { startService(getActionSettedVpnServiceIntent()) } // null
+            ?: run { startService(getServiceIntentWithAction()) }
     }
 
     private val permissionActivityLauncherForResult =
         registerForActivityResult(StartActivityForResult()) { result: ActivityResult ->
             if (result.resultCode == Activity.RESULT_OK) {
-                startService(getActionSettedVpnServiceIntent())
+                startService(getServiceIntentWithAction())
             } else {
                 Toast.makeText(this, R.string.permission_denied, Toast.LENGTH_LONG).show()
             }
@@ -38,13 +38,12 @@ class MainActivity : AppCompatActivity() {
 
     fun stopVpnService(view: View) {
         startService(
-            getActionSettedVpnServiceIntent(SkeletonVpnService.DISCONNECT_ACTION)
+            getServiceIntentWithAction(SkeletonVpnService.DISCONNECT_ACTION)
         )
     }
 
-    private fun getActionSettedVpnServiceIntent(action: String = SkeletonVpnService.CONNECT_ACTION)
+    private fun getServiceIntentWithAction(action: String = SkeletonVpnService.CONNECT_ACTION)
     : Intent {
-        return Intent(this, SkeletonVpnService::class.java)
-            .setAction(action)
+        return Intent(this, SkeletonVpnService::class.java).setAction(action)
     }
 }
