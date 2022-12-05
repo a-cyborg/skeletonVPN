@@ -7,28 +7,16 @@
     tools:context=".MainActivity">
 
     <TextView
-        android:id="@+id/header_textview"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="13dp"
-        android:text="@string/header_emoji"
-        android:textSize="30sp"
-        app:layout_constraintBottom_toTopOf="@+id/input_wrapper_layout"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.011" />
-
-    <TextView
         android:id="@+id/dashboard_textview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
         android:scrollbars="vertical"
-        android:text="Welcome☠️"
-        android:textSize="23sp"
+        android:text="@string/pirate_emoji"
+        android:textSize="18sp"
         app:layout_constraintBottom_toTopOf="@id/input_wrapper_layout"
-        app:layout_constraintTop_toBottomOf="@+id/header_textview" />
+        app:layout_constraintTop_toTopOf="parent"
+        tools:layout_editor_absoluteX="16dp" />
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/input_wrapper_layout"
@@ -44,27 +32,28 @@
         app:layout_constraintTop_toBottomOf="@+id/dashboard_textview">
 
         <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/server_addr_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="8dp">
 
             <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/server_addr"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/round_corner"
                 android:hint="@string/server_address"
-                android:inputType="numberDecimal"
+                android:digits="0123456789.:"
+                android:maxLength="39"
                 android:maxLines="1" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/port_num_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="8dp">
 
             <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/server_port"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/round_corner"
@@ -75,13 +64,13 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/shared_secret_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="8dp"
             android:layout_marginBottom="8dp">
 
             <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/shared_secret"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@drawable/round_corner"

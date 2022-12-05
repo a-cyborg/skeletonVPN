@@ -3,6 +3,9 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="../skeletonvpn/app/src/main/res/drawable-v24/ic_launcher_foreground.xml" value="0.164" />
+        <entry key="../skeletonvpn/app/src/main/res/drawable/round_corner.xml" value="0.2075" />
+        <entry key="../skeletonvpn/app/src/main/res/layout/activity_main.xml" value="0.21243169398907105" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.1" />
       </map>
     </option>
