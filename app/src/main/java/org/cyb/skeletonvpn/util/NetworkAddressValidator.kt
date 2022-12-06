@@ -1,7 +1,7 @@
 package org.cyb.skeletonvpn.util
 
 interface NetworkAddressValidator {
-    fun isAcceptable(input: String): Boolean
+    fun isValid(input: String): Boolean
 }
 
 enum class RegexNetworkAddressValidator(private val regex: Regex) : NetworkAddressValidator {
@@ -13,12 +13,12 @@ enum class RegexNetworkAddressValidator(private val regex: Regex) : NetworkAddre
     ;
 
     companion object {
-        fun isAcceptableIpAddress(input: String): Boolean  {
+        fun isValidIpAddress(input: String): Boolean  {
            return IPv4.regex.matches(input) or IPv6.regex.matches(input)
         }
     }
 
-    override fun isAcceptable(input: String): Boolean {
+    override fun isValid(input: String): Boolean {
         return regex.matches(input)
     }
 }

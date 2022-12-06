@@ -17,7 +17,7 @@ class RegexNetworkAddressValidatorTest {
 
         acceptableList.forEach { acceptable ->
             assertTrue("${javaClass.simpleName}|IPv4_isAcceptable_should_return_true failed on $acceptable"
-                ,RegexNetworkAddressValidator.IPv4.isAcceptable(acceptable))
+                ,RegexNetworkAddressValidator.IPv4.isValid(acceptable))
         }
     }
 
@@ -33,7 +33,7 @@ class RegexNetworkAddressValidatorTest {
 
         rejectableList.forEach { rejectable ->
             assertFalse("${javaClass.simpleName}|IPv4_isAcceptable_should_return_false failed on $rejectable"
-                ,RegexNetworkAddressValidator.IPv4.isAcceptable(rejectable))
+                ,RegexNetworkAddressValidator.IPv4.isValid(rejectable))
         }
     }
 
@@ -55,7 +55,7 @@ class RegexNetworkAddressValidatorTest {
 
         acceptableList.forEach { acceptable ->
             assertTrue("${javaClass.simpleName}|IPv6_isAcceptable_should_return_true Failed on $acceptable"
-                ,RegexNetworkAddressValidator.IPv6.isAcceptable(acceptable)
+                ,RegexNetworkAddressValidator.IPv6.isValid(acceptable)
             )
         }
     }
@@ -75,7 +75,7 @@ class RegexNetworkAddressValidatorTest {
 
         rejectableList.forEach { rejectable ->
             assertFalse("${javaClass.simpleName}|IPv6_isAcceptable_should_return_false Failed on $rejectable"
-                ,RegexNetworkAddressValidator.IPv6.isAcceptable(rejectable))
+                ,RegexNetworkAddressValidator.IPv6.isValid(rejectable))
         }
     }
 
@@ -90,7 +90,7 @@ class RegexNetworkAddressValidatorTest {
 
         acceptableList.forEach { acceptable ->
             assertTrue("${javaClass.simpleName}|Port_isAcceptable_should_return_true failed on $acceptable",
-                RegexNetworkAddressValidator.PORT.isAcceptable(acceptable))
+                RegexNetworkAddressValidator.PORT.isValid(acceptable))
         }
     }
 
@@ -106,7 +106,7 @@ class RegexNetworkAddressValidatorTest {
 
        rejectableList.forEach { rejectable ->
            assertFalse("${javaClass.simpleName}|Port_isAcceptable_should_return_false failed on $rejectable"
-               ,RegexNetworkAddressValidator.PORT.isAcceptable(rejectable))
+               ,RegexNetworkAddressValidator.PORT.isValid(rejectable))
        }
     }
 
@@ -128,7 +128,7 @@ class RegexNetworkAddressValidatorTest {
 
         acceptableList.forEach { acceptable ->
            assertTrue("${javaClass.simpleName}|isAcceptableIpAddress_should_return_true failed on $acceptable"
-               ,RegexNetworkAddressValidator.isAcceptableIpAddress(acceptable))
+               ,RegexNetworkAddressValidator.isValidIpAddress(acceptable))
         }
 
     }
@@ -149,7 +149,7 @@ class RegexNetworkAddressValidatorTest {
 
         rejectableList.forEach { rejectable ->
            assertFalse("${javaClass.simpleName}|isAcceptableIPAddress_should_return_false failed on $rejectable"
-               ,RegexNetworkAddressValidator.isAcceptableIpAddress(rejectable))
+               ,RegexNetworkAddressValidator.isValidIpAddress(rejectable))
         }
     }
 }

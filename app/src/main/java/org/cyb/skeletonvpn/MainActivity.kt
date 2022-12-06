@@ -10,69 +10,60 @@ import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.appcompat.app.AppCompatActivity
-import org.cyb.skeletonvpn.util.Prefs
-import org.cyb.skeletonvpn.util.isAcceptableIpAddress
-import org.cyb.skeletonvpn.util.isAcceptablePortNumber
+import org.cyb.skeletonvpn.util.*
+import java.io.IOException
 
 
 class MainActivity : AppCompatActivity() {
     private val TAG = this@MainActivity::class.java.simpleName
 
     private lateinit var dashboard: TextView
-    private lateinit var serverAddrView: EditText
-    private lateinit var serverPortView: EditText
-    private lateinit var sharedSecretView: EditText
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         dashboard = findViewById(R.id.dashboard_textview)
-        serverAddrView = findViewById(R.id.server_addr)
-        serverPortView = findViewById(R.id.server_port)
-        sharedSecretView = findViewById(R.id.shared_secret)
     }
 
-    fun startVpnService(view: View) {
-        val serverAddr = serverAddrView.text.toString()
-        val port = serverPortView.text.toString()
-        val sharedSecret = sharedSecretView.text.toString()
-
-        if (isAcceptableIpAddress(serverAddr) and isAcceptablePortNumber(port)) {
-            saveInputsToShredPrefs(serverAddr, port, sharedSecret)
-            prepareVpnService()
-        } else {
-            dashboard.setText(R.string.unacceptable_inputs)
+    fun connectButtonClicked(view: View) {
+        try {
+            collectUserInputAndSaveToSharedPreferences()
+            startVpnService()
+        } catch (error: IOException) {
+            dashboard.text = error.message
         }
     }
 
-    private fun saveInputsToShredPrefs(serverAddr: String, port: String, secret: String) {
-        with (getSharedPreferences(Prefs.NAME.key, MODE_PRIVATE).edit()) {
-            putString(Prefs.SERVER_ADDRESS.key, serverAddr)
-            putString(Prefs.SERVER_PORT.key, port)
-            putString(Prefs.SHARED_SECRET.key, secret)
-            commit()
+    @Throws
+    private fun collectUserInputAndSaveToSharedPreferences() {
+        val serverAddress = findViewById<EditText>(R.id.server_addr).text.toString()
+        val serverPort = findViewById<EditText>(R.id.server_port).text.toString()
+        val sharedSecret = findViewById<EditText>(R.id.shared_secret).text.toString()
+
+        with (UserInput(serverAddress, serverPort, sharedSecret)) {
+            if (isValidNetworkAddress()) {
+                saveToSharedPreferences(this@MainActivity)
+            } else {
+                throw IOException("Invalid server address.")
+            }
         }
     }
 
-    private fun prepareVpnService() {
+    private fun startVpnService() {
         // Prepare the app to become the user's current VPN service.
         // If user hasn't given permission `VpnService.prepare()` returns an activity intent.
-        val intent = VpnService.prepare(this)
-
-        if (intent == null) {
-            startService(getServiceIntentWithAction())
-        } else {
-            permissionActivityLauncherForResult.launch(intent)
+        when (val intent = VpnService.prepare(this)) {
+            null -> startService(getServiceIntentWithAction())
+            else -> permissionActivityLauncherForResult.launch(intent)
         }
     }
 
     private val permissionActivityLauncherForResult =
         registerForActivityResult(StartActivityForResult()) { result: ActivityResult ->
-            if (result.resultCode == RESULT_OK) {
-                startService(getServiceIntentWithAction())
-            } else {
-                Toast.makeText(this, R.string.permission_denied, Toast.LENGTH_LONG).show()
+            when (result.resultCode) {
+                RESULT_OK -> startService(getServiceIntentWithAction())
+                else -> dashboard.setText(R.string.permission_denied)
             }
     }
 
@@ -82,9 +73,13 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private fun getServiceIntentWithAction(action: String = SkeletonVpnService.CONNECT_ACTION)
-    : Intent {
+    private fun getServiceIntentWithAction(
+        action: String = SkeletonVpnService.CONNECT_ACTION): Intent {
         return Intent(this, SkeletonVpnService::class.java)
             .setAction(action)
+    }
+
+    private fun displayToast(msg: Int) {
+        Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
     }
 }
