@@ -28,13 +28,13 @@ class SkeletonVpnConnection(
     private val MAX_PACKET_SIZE = Short.MAX_VALUE.toInt()
     private val MAX_HANDSHAKE_ATTEMPS = 30
 
-    lateinit var connectionListener:  ConnectionListener
+    private lateinit var connectionListener:  ConnectionListener
 
     interface ConnectionListener {
         fun onEstablish(tunInterface: ParcelFileDescriptor)
     }
 
-    fun setOnConnectionListener(listener: (ParcelFileDescriptor) -> Unit) {
+    fun setOnEstablishListener(listener: (ParcelFileDescriptor) -> Unit) {
        this.connectionListener = object : ConnectionListener {
            override fun onEstablish(tunInterface: ParcelFileDescriptor) {
                listener(tunInterface)

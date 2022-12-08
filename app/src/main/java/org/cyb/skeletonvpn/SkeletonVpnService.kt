@@ -3,9 +3,8 @@ package org.cyb.skeletonvpn
 import android.content.Intent
 import android.net.VpnService
 import android.os.ParcelFileDescriptor
-import org.cyb.skeletonvpn.util.getNotification
-import org.cyb.skeletonvpn.util.updateNotification
-import org.cyb.skeletonvpn.util.NOTIFICATION_ID
+import android.util.Log
+import org.cyb.skeletonvpn.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
@@ -13,8 +12,8 @@ class SkeletonVpnService : VpnService() {
     private val TAG = this@SkeletonVpnService::class.java.simpleName
 
     private val connectionId = AtomicInteger(1)
-    private val connectionRef = AtomicReference<Thread>()
-    private val connectionAndTunRef = AtomicReference<Pair<Thread, ParcelFileDescriptor>>()
+    private val atomicThreadRef = AtomicReference<Thread>()
+    private val atomicThreadAndTunInterfaceRef = AtomicReference<Pair<Thread, ParcelFileDescriptor>>()
 
     companion object {
         const val CONNECT_ACTION = "SKELETON_VPN_CONNECT"
@@ -22,47 +21,52 @@ class SkeletonVpnService : VpnService() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        return if (intent?.action == DISCONNECT_ACTION) {
-            disconnect()
-            START_NOT_STICKY
-        } else {
-            connect()
-            START_STICKY
+        return when (val action = intent?.action) {
+            CONNECT_ACTION -> { connect(); START_STICKY }
+            DISCONNECT_ACTION -> { disconnect(); START_NOT_STICKY }
+            else -> { receivedUnknownAction(action) }
         }
+    }
+
+    private fun receivedUnknownAction(action: String?): Int {
+        // TODO: implement solution for the unknown action.
+        Log.e(TAG, "receivedUnknownAction: received action = [$action]")
+        return START_FLAG_RETRY
     }
 
     private fun connect() {
         // Become a foreground service.
         startForeground(NOTIFICATION_ID, getNotification(R.string.connecting, this))
 
-        // TODO: Refactoring - DevMode hard coded parameters
-        val connection = SkeletonVpnConnection(
+        val connection =initConnectionRunnable()
+
+        val connectionThread = Thread(connection, "SkeletonVpnConnectionThread")
+        atomicThreadRef.getAndSet(connectionThread)?.interrupt()
+
+        connection.setOnEstablishListener { tunInterface ->
+            updateNotification(R.string.connected, this)
+            atomicThreadRef.compareAndSet(connectionThread, null)
+            setAtomicThreadAndTunPairReference(Pair(connectionThread, tunInterface))
+        }
+
+        connectionThread.start()
+    }
+
+    private fun initConnectionRunnable() : SkeletonVpnConnection {
+        // TODO: implements validation check if wrong value is returned then throw critical Exception.
+        val serverInfo = getServerInfoFromSharedPreferences(this)
+
+        return SkeletonVpnConnection(
             this,
             connectionId.getAndIncrement(),
-            "192.168.45.33",
-            8000,
-            "justtwoofus", // shared secret.
+            serverInfo.serverAddr,
+            serverInfo.serverPort.toInt(),
+            serverInfo.sharedSecret,
         )
-
-        Thread(connection, "SkeletonVpnThread").run {
-            setConnectionReference(this) // Check if we have any dangled thread.
-
-            connection.setOnConnectionListener { tunInterface ->
-                updateNotification(R.string.connected, this@SkeletonVpnService)
-                connectionRef.compareAndSet(this, null)
-                setAtomicConnectionAndTunPair(Pair(this, tunInterface))
-            }
-
-            start()
-        }
     }
 
-    private fun setConnectionReference(newThread: Thread?) {
-        connectionRef.getAndSet(newThread)?.interrupt()
-    }
-
-    private fun setAtomicConnectionAndTunPair(newPair: Pair<Thread, ParcelFileDescriptor>?) {
-        connectionAndTunRef.getAndSet(newPair)?.let {
+    private fun setAtomicThreadAndTunPairReference (newPair: Pair<Thread, ParcelFileDescriptor>?) {
+        atomicThreadAndTunInterfaceRef.getAndSet(newPair)?.let {
             it.first.interrupt()
             it.second.close()
         }
@@ -73,8 +77,22 @@ class SkeletonVpnService : VpnService() {
     }
 
     private fun disconnect() {
-        setConnectionReference(null)
-        setAtomicConnectionAndTunPair(null)
+        atomicThreadRef.set(null)
+        setAtomicThreadAndTunPairReference(null)
         stopForeground(true)
+        stopSelf()
     }
 }
+
+/*
+Thread(connection, "SkeletonVpnConnectionThread").run {
+    setAtomicThreadReference(this)
+
+    connection.setOnConnectionListener { tunInterface ->
+        updateNotification(R.string.connected, this@SkeletonVpnService)
+        atomicThreadRef.compareAndSet(this, null)
+        setAtomicThreadAndTunPairReference(Pair(this, tunInterface))
+    }
+    start()
+}
+ */

@@ -59,7 +59,7 @@
                 android:background="@drawable/round_corner"
                 android:hint="@string/port_number"
                 android:inputType="numberDecimal"
-                android:maxLength="4"
+                android:maxLength="5"
                 android:maxLines="1" />
         </com.google.android.material.textfield.TextInputLayout>
 

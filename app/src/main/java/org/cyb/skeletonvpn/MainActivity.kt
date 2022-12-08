@@ -6,12 +6,12 @@ import android.os.Bundle
 import android.view.View
 import android.widget.EditText
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.appcompat.app.AppCompatActivity
 import org.cyb.skeletonvpn.util.*
 import java.io.IOException
+import java.util.InputMismatchException
 
 
 class MainActivity : AppCompatActivity() {
@@ -30,7 +30,7 @@ class MainActivity : AppCompatActivity() {
         try {
             collectUserInputAndSaveToSharedPreferences()
             startVpnService()
-        } catch (error: IOException) {
+        } catch (error: InputMismatchException) {
             dashboard.text = error.message
         }
     }
@@ -41,13 +41,8 @@ class MainActivity : AppCompatActivity() {
         val serverPort = findViewById<EditText>(R.id.server_port).text.toString()
         val sharedSecret = findViewById<EditText>(R.id.shared_secret).text.toString()
 
-        with (UserInput(serverAddress, serverPort, sharedSecret)) {
-            if (isValidNetworkAddress()) {
-                saveToSharedPreferences(this@MainActivity)
-            } else {
-                throw IOException("Invalid server address.")
-            }
-        }
+        ServerInfo(serverAddress, serverPort, sharedSecret)
+            .ifIsValidAddressThenSaveToSharedPrefs(this)
     }
 
     private fun startVpnService() {
@@ -74,12 +69,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getServiceIntentWithAction(
-        action: String = SkeletonVpnService.CONNECT_ACTION): Intent {
+        action: String = SkeletonVpnService.CONNECT_ACTION
+    ): Intent {
         return Intent(this, SkeletonVpnService::class.java)
             .setAction(action)
-    }
-
-    private fun displayToast(msg: Int) {
-        Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
     }
 }
