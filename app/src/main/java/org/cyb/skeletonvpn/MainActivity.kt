@@ -30,8 +30,10 @@ class MainActivity : AppCompatActivity() {
         try {
             collectUserInputAndSaveToSharedPreferences()
             startVpnService()
-        } catch (error: InputMismatchException) {
-            dashboard.text = error.message
+        } catch (exception: InputMismatchException) {
+            dashboard.text = exception.message
+        } catch (exception: Exception) {
+            dashboard.text = exception.message
         }
     }
 

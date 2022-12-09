@@ -19,7 +19,7 @@ fun ServerInfo.ifIsValidAddressThenSaveToSharedPrefs(context: Context) {
     }
 }
 
-private fun ServerInfo.isValidNetworkAddress(): Boolean {
+fun ServerInfo.isValidNetworkAddress(): Boolean {
     if (!isValidIpAddress(serverAddr)) {
         throw InputMismatchException("Invalid IP address [$serverAddr].")
     } else if (!isValidPortNumber(serverPort)) {

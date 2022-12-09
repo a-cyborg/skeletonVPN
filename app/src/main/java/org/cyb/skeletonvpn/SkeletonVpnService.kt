@@ -21,40 +21,55 @@ class SkeletonVpnService : VpnService() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        return when (val action = intent?.action) {
-            CONNECT_ACTION -> { connect(); START_STICKY }
-            DISCONNECT_ACTION -> { disconnect(); START_NOT_STICKY }
-            else -> { receivedUnknownAction(action) }
+        when (val action = intent?.action) {
+            CONNECT_ACTION -> {
+                connect()
+                return START_STICKY
+            }
+            DISCONNECT_ACTION -> {
+                disconnect()
+                return START_NOT_STICKY
+            }
+            else -> {
+                receivedUnknownAction(action)
+                return START_NOT_STICKY
+            }
         }
     }
 
-    private fun receivedUnknownAction(action: String?): Int {
-        // TODO: implement solution for the unknown action.
+    private fun receivedUnknownAction(action: String?) {
         Log.e(TAG, "receivedUnknownAction: received action = [$action]")
-        return START_FLAG_RETRY
     }
 
     private fun connect() {
         // Become a foreground service.
         startForeground(NOTIFICATION_ID, getNotification(R.string.connecting, this))
 
-        val connection =initConnectionRunnable()
+        try {
+            val connection =initConnectionRunnable()
 
-        val connectionThread = Thread(connection, "SkeletonVpnConnectionThread")
-        atomicThreadRef.getAndSet(connectionThread)?.interrupt()
+            with (Thread(connection, "SkeletonVpnThread")) {
+                makeSureOneThread(this)
 
-        connection.setOnEstablishListener { tunInterface ->
-            updateNotification(R.string.connected, this)
-            atomicThreadRef.compareAndSet(connectionThread, null)
-            setAtomicThreadAndTunPairReference(Pair(connectionThread, tunInterface))
+                connection.setOnEstablishListener { tunInterface ->
+                    updateNotification(R.string.connected, this@SkeletonVpnService)
+                    removeRunningThreadFromAtomicRef(this)
+                    makeSureOnePairOfThreadAndTun(Pair(this, tunInterface))
+                }
+
+                start()
+            }
+        } catch (exception: Exception) {
+            throw exception
+        } finally {
+            disconnect()
         }
-
-        connectionThread.start()
     }
 
+    @Throws
     private fun initConnectionRunnable() : SkeletonVpnConnection {
-        // TODO: implements validation check if wrong value is returned then throw critical Exception.
         val serverInfo = getServerInfoFromSharedPreferences(this)
+        serverInfo.isValidNetworkAddress() // Throw exception if it is invalid.
 
         return SkeletonVpnConnection(
             this,
@@ -65,7 +80,15 @@ class SkeletonVpnService : VpnService() {
         )
     }
 
-    private fun setAtomicThreadAndTunPairReference (newPair: Pair<Thread, ParcelFileDescriptor>?) {
+    private fun makeSureOneThread(newThread: Thread) {
+       atomicThreadRef.getAndSet(newThread)?.interrupt()
+    }
+
+    private fun removeRunningThreadFromAtomicRef(runningThread: Thread) {
+        atomicThreadRef.compareAndSet(runningThread, null)
+    }
+
+    private fun makeSureOnePairOfThreadAndTun (newPair: Pair<Thread, ParcelFileDescriptor>?) {
         atomicThreadAndTunInterfaceRef.getAndSet(newPair)?.let {
             it.first.interrupt()
             it.second.close()
@@ -78,21 +101,8 @@ class SkeletonVpnService : VpnService() {
 
     private fun disconnect() {
         atomicThreadRef.set(null)
-        setAtomicThreadAndTunPairReference(null)
+        makeSureOnePairOfThreadAndTun(null)
         stopForeground(true)
         stopSelf()
     }
 }
-
-/*
-Thread(connection, "SkeletonVpnConnectionThread").run {
-    setAtomicThreadReference(this)
-
-    connection.setOnConnectionListener { tunInterface ->
-        updateNotification(R.string.connected, this@SkeletonVpnService)
-        atomicThreadRef.compareAndSet(this, null)
-        setAtomicThreadAndTunPairReference(Pair(this, tunInterface))
-    }
-    start()
-}
- */
