@@ -3,6 +3,7 @@ package org.cyb.skeletonvpn
 import android.content.Intent
 import android.net.VpnService
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.EditText
 import android.widget.TextView
@@ -19,11 +20,29 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var dashboard: TextView
 
+    private lateinit var serverAddrView: EditText
+    private lateinit var serverPortView: EditText
+    private lateinit var sharedSecretView: EditText
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         dashboard = findViewById(R.id.dashboard_textview)
+        serverAddrView = findViewById(R.id.server_addr)
+        serverPortView = findViewById(R.id.server_port)
+        sharedSecretView = findViewById(R.id.shared_secret)
+
+        setSavedServerInfoToEditText()
+    }
+
+    private fun setSavedServerInfoToEditText() {
+        val serverInfo = getServerInfoFromSharedPreferences(this)
+
+        serverAddrView.setText(serverInfo.serverAddr)
+        serverPortView.setText(serverInfo.serverPort)
+        sharedSecretView.setText(serverInfo.sharedSecret)
     }
 
     fun connectButtonClicked(view: View) {
@@ -32,16 +51,14 @@ class MainActivity : AppCompatActivity() {
             startVpnService()
         } catch (exception: InputMismatchException) {
             dashboard.text = exception.message
-        } catch (exception: Exception) {
-            dashboard.text = exception.message
         }
     }
 
     @Throws
     private fun collectUserInputAndSaveToSharedPreferences() {
-        val serverAddress = findViewById<EditText>(R.id.server_addr).text.toString()
-        val serverPort = findViewById<EditText>(R.id.server_port).text.toString()
-        val sharedSecret = findViewById<EditText>(R.id.shared_secret).text.toString()
+        val serverAddress = serverAddrView.text.toString()
+        val serverPort = serverPortView.text.toString()
+        val sharedSecret = sharedSecretView.text.toString()
 
         ServerInfo(serverAddress, serverPort, sharedSecret)
             .ifIsValidAddressThenSaveToSharedPrefs(this)
