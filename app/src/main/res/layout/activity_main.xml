@@ -104,7 +104,7 @@
             android:id="@+id/disconnect_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:onClick="stopVpnService"
+            android:onClick="disconnectButtonClicked"
             android:text="@string/disconnect"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
