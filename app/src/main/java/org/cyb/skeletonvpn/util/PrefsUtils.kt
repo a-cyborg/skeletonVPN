@@ -10,22 +10,24 @@ enum class Prefs (val key: String) {
     SHARED_SECRET("sharedSecret"),
 }
 
-fun saveServerInfoToSharedPreferences(context: Context, serverInfo: ServerInfo) {
+fun saveStringToShardPrefs(context: Context, keyStringMap: Map<Prefs, String>) {
     with (context.getSharedPreferences(Prefs.NAME.key, MODE_PRIVATE).edit()) {
-        putString(Prefs.SERVER_ADDRESS.key, serverInfo.serverAddr)
-        putString(Prefs.SERVER_PORT.key, serverInfo.serverPort)
-        putString(Prefs.SHARED_SECRET.key, serverInfo.sharedSecret)
+        keyStringMap.forEach {
+            putString(it.key.key, it.value)
+        }
         commit()
     }
 }
 
-fun getServerInfoFromSharedPreferences(context: Context) : ServerInfo {
+fun getStringFromSharedPrefs(context: Context, prefs: List<Prefs>) : MutableList<String> {
     val preferences = context.getSharedPreferences(Prefs.NAME.key, MODE_PRIVATE)
+    val values: MutableList<String> = mutableListOf()
 
-    val serverAddr = preferences.getString(Prefs.SERVER_ADDRESS.key, "")
-    val serverPort = preferences.getString(Prefs.SERVER_PORT.key, "")
-    val sharedSecret = preferences.getString(Prefs.SHARED_SECRET.key, "")
+    prefs.forEach { pref ->
+        preferences.getString(pref.key, "")?.let {
+            values.add(it)
+        }
+    }
 
-    return ServerInfo(serverAddr!!, serverPort!!, sharedSecret!!)
+    return values
 }
-

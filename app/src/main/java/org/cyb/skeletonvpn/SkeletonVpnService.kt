@@ -68,8 +68,7 @@ class SkeletonVpnService : VpnService() {
 
     @Throws
     private fun initConnectionRunnable() : SkeletonVpnConnection {
-        val serverInfo = getServerInfoFromSharedPreferences(this)
-        serverInfo.isValidNetworkAddress()
+        val serverInfo = ifValidGetServerInfoFromShardPrefs(this)
 
         return SkeletonVpnConnection(
             this,

@@ -3,7 +3,6 @@ package org.cyb.skeletonvpn.util
 import android.content.Context
 import android.net.InetAddresses
 import android.os.Build
-import android.util.Log
 import java.util.InputMismatchException
 
 data class ServerInfo(val serverAddr: String, val serverPort: String, val sharedSecret: String) {
@@ -13,13 +12,32 @@ data class ServerInfo(val serverAddr: String, val serverPort: String, val shared
     }
 }
 
-fun ServerInfo.ifIsValidAddressThenSaveToSharedPrefs(context: Context) {
+fun ServerInfo.ifValidSaveToSharedPrefs(context: Context) {
     if (isValidNetworkAddress()) {
-        saveServerInfoToSharedPreferences(context, this)
+        val prefServerInfoMap = mapOf(
+            Prefs.SERVER_ADDRESS to serverAddr,
+            Prefs.SERVER_PORT to serverPort,
+            Prefs.SHARED_SECRET to sharedSecret,
+        )
+
+        saveStringToShardPrefs(context, prefServerInfoMap)
     }
 }
 
-fun ServerInfo.isValidNetworkAddress(): Boolean {
+fun ifValidGetServerInfoFromShardPrefs(context: Context): ServerInfo {
+    val values = getStringFromSharedPrefs(
+        context,
+        listOf(Prefs.SERVER_ADDRESS, Prefs.SERVER_PORT, Prefs.SHARED_SECRET
+        )
+    )
+
+    val serverInfo = ServerInfo(values[0], values[1], values[2])
+    serverInfo.isValidNetworkAddress()
+
+    return serverInfo
+}
+
+private fun ServerInfo.isValidNetworkAddress(): Boolean {
     if (!isValidIpAddress(serverAddr)) {
         throw InputMismatchException("Invalid IP address [$serverAddr].")
     } else if (!isValidPortNumber(serverPort)) {

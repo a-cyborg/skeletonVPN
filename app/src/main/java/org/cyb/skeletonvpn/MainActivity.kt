@@ -3,7 +3,6 @@ package org.cyb.skeletonvpn
 import android.content.Intent
 import android.net.VpnService
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.EditText
 import android.widget.TextView
@@ -11,7 +10,6 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.appcompat.app.AppCompatActivity
 import org.cyb.skeletonvpn.util.*
-import java.io.IOException
 import java.util.InputMismatchException
 
 
@@ -34,20 +32,20 @@ class MainActivity : AppCompatActivity() {
         serverPortView = findViewById(R.id.server_port)
         sharedSecretView = findViewById(R.id.shared_secret)
 
-        setSavedServerInfoToEditText()
+        setLastUsedServerInfoToView()
     }
 
-    private fun setSavedServerInfoToEditText() {
-        val serverInfo = getServerInfoFromSharedPreferences(this)
-
-        serverAddrView.setText(serverInfo.serverAddr)
-        serverPortView.setText(serverInfo.serverPort)
-        sharedSecretView.setText(serverInfo.sharedSecret)
+    private fun setLastUsedServerInfoToView() {
+        with (ifValidGetServerInfoFromShardPrefs(this)) {
+            serverAddrView.setText(serverAddr)
+            serverPortView.setText(serverPort)
+            sharedSecretView.setText(sharedSecret)
+        }
     }
 
     fun connectButtonClicked(view: View) {
         try {
-            collectUserInputAndSaveToSharedPreferences()
+            collectInputAndSaveToSharedPrefs()
             startVpnService()
         } catch (exception: InputMismatchException) {
             dashboard.text = exception.message
@@ -55,13 +53,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     @Throws
-    private fun collectUserInputAndSaveToSharedPreferences() {
+    private fun collectInputAndSaveToSharedPrefs() {
         val serverAddress = serverAddrView.text.toString()
         val serverPort = serverPortView.text.toString()
         val sharedSecret = sharedSecretView.text.toString()
 
         ServerInfo(serverAddress, serverPort, sharedSecret)
-            .ifIsValidAddressThenSaveToSharedPrefs(this)
+            .ifValidSaveToSharedPrefs(this)
     }
 
     private fun startVpnService() {
@@ -81,7 +79,7 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
-    fun stopVpnService(view: View) {
+    fun disconnectButtonClicked(view: View) {
         startService(
             getServiceIntentWithAction(SkeletonVpnService.DISCONNECT_ACTION)
         )
