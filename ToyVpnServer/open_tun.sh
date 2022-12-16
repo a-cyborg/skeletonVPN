@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-# This script configures the _tun_ interface on the linux system.
+# This script configures the TUN interface on the linux system.
 
 # Change belows as you wish.
 TUN_NAME="tun0"
@@ -10,7 +10,6 @@ DEST_ADDR="10.0.0.2/32"
 echo "🐝 Setting up the tun interface \n
     | name = $TUN_NAME | source address = $SRC_ADDR | destination address = $DEST_ADDR |"
 
-# Enable Ip forwarding.
 echo 1 > /proc/sys/net/ipv4/ip_forward
 
 ip tuntap add name $TUN_NAME mode tun
