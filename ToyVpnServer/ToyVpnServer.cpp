@@ -111,12 +111,11 @@ static int get_tunnel(char *port, char *secret)
         addrlen = sizeof(addr);
         int n = recvfrom(tunnel, packet, sizeof(packet), 0,
                 (sockaddr *)&addr, &addrlen);
-
         if (n <= 0 ) {
             return -1;
         }
         packet[n] = 0;
-    } while (packet[0] == 0 && strcmp(secret, &packet[1]));
+    } while (packet[0] != 0 && strcmp(secret, &packet[1]));
 
     // Connect to the client as we only handle one client at a time.
     connect(tunnel, (sockaddr *)&addr, addrlen);
