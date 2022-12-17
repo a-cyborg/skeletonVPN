@@ -2,9 +2,11 @@ package org.cyb.skeletonvpn
 
 import android.os.ParcelFileDescriptor
 import android.util.Log
+import org.cyb.skeletonvpn.util.ServerConfig
+import org.cyb.skeletonvpn.util.ToyVpnServerUtils
 import java.net.InetSocketAddress
-import java.nio.ByteBuffer
 import java.nio.channels.DatagramChannel
+import java.util.concurrent.TimeoutException
 
 class SkeletonVpnConnection(
     private val sVpnService: SkeletonVpnService,
@@ -15,114 +17,72 @@ class SkeletonVpnConnection(
 ) : Runnable {
     private val TAG = this@SkeletonVpnConnection::class.java.simpleName
 
-    private lateinit var connectionListener:  ConnectionListener
+    private lateinit var connectionListener: ConnectionListener
 
     interface ConnectionListener {
         fun onEstablish(tunInterface: ParcelFileDescriptor)
     }
 
     fun setConnectionOnEstablishListener(onEstablish: (ParcelFileDescriptor) -> Unit) {
-       this.connectionListener = object : ConnectionListener {
-           override fun onEstablish(tunInterface: ParcelFileDescriptor) {
-               onEstablish(tunInterface)
-           }
-       }
+        this.connectionListener = object : ConnectionListener {
+            override fun onEstablish(tunInterface: ParcelFileDescriptor) {
+                onEstablish(tunInterface)
+            }
+        }
     }
 
     override fun run() {
-        Log.i(TAG, "run: Starting new connection [ $connectionId ]")
+        Log.i(TAG, "run: Starting new connection [$connectionId]")
         try {
-            Log.i(TAG, "run: Connect to server [$serverAddress : $serverPort]")
             runConnection()
-        } catch (exception: InterruptedException) {
+        } catch (e: InterruptedException) {
             Log.i(TAG, "run: Thread is interrupted, closing [$connectionId]")
+        } catch (e: TimeoutException) {
+            Log.d(TAG, "run: handle handshake fail. [${e.message}]")
         }
     }
 
     private fun runConnection() {
         var tunInterface: ParcelFileDescriptor? = null
-        var tunnel : DatagramChannel? = null
-        var processor : VpnProcessor? = null
+        var tunnel: DatagramChannel? = null
 
         try {
             tunnel = getTunnel()
-            tunInterface = handshake(tunnel)
 
-            processor = VpnProcessor(tunnel, tunInterface)
-            processor.run()
+            val serverConfig = ToyVpnServerUtils().handshake(tunnel, sharedSecret)
+            tunInterface = getTunInterface(serverConfig)
+
+            VpnProcessor().run(tunnel, tunInterface)
         } finally {
-            processor?.tun?.close()
-            processor?.tunnel?.disconnect()
-            processor = null
             tunInterface?.close()
             tunnel?.disconnect()
         }
     }
 
-    private fun getTunnel() : DatagramChannel {
-        val tunnel = DatagramChannel.open()
-
-        if (!sVpnService.protect(tunnel.socket())) {
-            throw IllegalStateException("Cannot protect the tunnel")
-        }
-
-        tunnel.configureBlocking(false) // non-blocking mode
-        tunnel.connect(InetSocketAddress(serverAddress, serverPort))
-
-        return tunnel
-    }
-
-    private fun handshake(tunnel: DatagramChannel) : ParcelFileDescriptor {
-        // To keep things simple in this demo, We just send the shared secret in plaintext
-        // and wait for the server to send the parameters.
-
-        val packet = ByteBuffer.allocate(1024)
-        packet.put(sharedSecret.toByteArray()).flip()
-
-        // Send the packet 3 times in case of packet loss.
-        //for (i in 1..3) {
-        packet.position(0)
-        tunnel.write(packet)
-        // }
-
-        packet.clear()
-
-        return configure("-")
-    }
-
-    private fun configure(parameters: String): ParcelFileDescriptor {
-        // Tun interface builder.
-        /*
-        val builder = sVpnService.Builder()
-
-        for(parameter in parameters.split(",")) {
-            val field = parameter.split(":")
-
-            when (field[0].first().toString()) {
-                "a" -> builder.addAddress(field[1], field[2].toInt())
-                "m" -> builder.setMtu(field[1].toInt())
-                "r" -> builder.addRoute(field[1], field[2].toInt())
-                "d" -> builder.addDnsServer(field[1])
+    private fun getTunnel(): DatagramChannel {
+        DatagramChannel.open().run {
+            if (!sVpnService.protect(socket())) {
+                throw IllegalStateException("Failed to protect the tunnel")
             }
+
+            configureBlocking(false)  // non-blocking mode.
+
+            Log.i(TAG, "getTunnel: Connect to server [$serverAddress : $serverPort]")
+            return connect(InetSocketAddress(serverAddress, serverPort))
         }
+    }
 
-        builder.setSession(serverAddress)
-        builder.setConfigureIntent(sVpnService.configurePendingIntent)
-
-         */
-
+    private fun getTunInterface(serverConfig: ServerConfig): ParcelFileDescriptor {
         val tunBuilder = sVpnService.Builder().run {
-            addAddress("10.0.0.2", 32)
-            addRoute("0.0.0.0", 0)
-            // addRoute(VPN_ROUTE_V6, 0)
-            setMtu(1400)
+            addAddress(serverConfig.Address.first, serverConfig.Address.second)
+            addRoute(serverConfig.Route.first, serverConfig.Route.second)
+            setMtu(serverConfig.MTU)
             setSession(TAG)
-            // setConfigureIntent(sVpnService.configurePendingIntent)
         }
 
         tunBuilder.establish()?.let {
             Log.i(TAG, "configure: Established new tun interface : $it")
-            synchronized(sVpnService) { connectionListener.onEstablish(it)}
+            synchronized(sVpnService) { connectionListener.onEstablish(it) }
 
             return it
         }
