@@ -5,7 +5,11 @@ import android.net.InetAddresses
 import android.os.Build
 import java.util.InputMismatchException
 
-data class ServerInfo(val serverAddr: String, val serverPort: String, val sharedSecret: String) {
+data class ServerInfo(
+    val serverAddr: String,
+    val serverPort: String,
+    val sharedSecret: String,
+) {
     init {
         serverAddr.removeWhiteSpace()
         serverPort.removeWhiteSpace()
@@ -24,11 +28,10 @@ fun ServerInfo.ifValidSaveToSharedPrefs(context: Context) {
     }
 }
 
-fun ifValidGetServerInfoFromShardPrefs(context: Context): ServerInfo {
+fun getValidServerInfoFromShardPrefs(context: Context): ServerInfo {
     val values = getStringFromSharedPrefs(
         context,
-        listOf(Prefs.SERVER_ADDRESS, Prefs.SERVER_PORT, Prefs.SHARED_SECRET
-        )
+        listOf(Prefs.SERVER_ADDRESS, Prefs.SERVER_PORT, Prefs.SHARED_SECRET)
     )
 
     val serverInfo = ServerInfo(values[0], values[1], values[2])
@@ -37,6 +40,7 @@ fun ifValidGetServerInfoFromShardPrefs(context: Context): ServerInfo {
     return serverInfo
 }
 
+@Throws
 private fun ServerInfo.isValidNetworkAddress(): Boolean {
     if (!isValidIpAddress(serverAddr)) {
         throw InputMismatchException("Invalid IP address [$serverAddr].")

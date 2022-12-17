@@ -27,8 +27,9 @@ fun getNotification(msg: Int, context: Context): Notification {
         .build()
 }
 
-// Intent to be sent when the notification is clicked.
+
 private fun getContentIntent(context: Context): PendingIntent {
+    // Intent to be sent when the notification is clicked.
     val clientActivity = MainActivity::class.java
 
     return PendingIntent.getActivity(

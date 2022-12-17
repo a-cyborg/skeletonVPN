@@ -3,7 +3,7 @@ package org.cyb.skeletonvpn.util
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 
-enum class Prefs (val key: String) {
+enum class Prefs(val key: String) {
     NAME("skeletonVpnPrefs"),
     SERVER_ADDRESS("serverAddress"),
     SERVER_PORT("serverPort"),
@@ -11,7 +11,7 @@ enum class Prefs (val key: String) {
 }
 
 fun saveStringToShardPrefs(context: Context, keyStringMap: Map<Prefs, String>) {
-    with (context.getSharedPreferences(Prefs.NAME.key, MODE_PRIVATE).edit()) {
+    with(context.getSharedPreferences(Prefs.NAME.key, MODE_PRIVATE).edit()) {
         keyStringMap.forEach {
             putString(it.key.key, it.value)
         }
@@ -19,7 +19,7 @@ fun saveStringToShardPrefs(context: Context, keyStringMap: Map<Prefs, String>) {
     }
 }
 
-fun getStringFromSharedPrefs(context: Context, prefs: List<Prefs>) : MutableList<String> {
+fun getStringFromSharedPrefs(context: Context, prefs: List<Prefs>): MutableList<String> {
     val preferences = context.getSharedPreferences(Prefs.NAME.key, MODE_PRIVATE)
     val values: MutableList<String> = mutableListOf()
 

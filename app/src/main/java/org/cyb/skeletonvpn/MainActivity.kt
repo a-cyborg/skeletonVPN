@@ -22,7 +22,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var serverPortView: EditText
     private lateinit var sharedSecretView: EditText
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -36,7 +35,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setLastUsedServerInfoToView() {
-        with (ifValidGetServerInfoFromShardPrefs(this)) {
+        with(getValidServerInfoFromShardPrefs(this)) {
             serverAddrView.setText(serverAddr)
             serverPortView.setText(serverPort)
             sharedSecretView.setText(sharedSecret)
@@ -77,7 +76,7 @@ class MainActivity : AppCompatActivity() {
                 RESULT_OK -> startService(getServiceIntentWithAction())
                 else -> dashboard.setText(R.string.permission_denied)
             }
-    }
+        }
 
     fun disconnectButtonClicked(view: View) {
         startService(
