@@ -17,14 +17,14 @@ class SkeletonVpnConnection(
 ) : Runnable {
     private val TAG = this@SkeletonVpnConnection::class.java.simpleName
 
-    private lateinit var connectionListener: ConnectionListener
+    private lateinit var connectionEstablishListener: ConnectionEstablishListener
 
-    interface ConnectionListener {
+    interface ConnectionEstablishListener {
         fun onEstablish(tunInterface: ParcelFileDescriptor)
     }
 
-    fun setConnectionOnEstablishListener(onEstablish: (ParcelFileDescriptor) -> Unit) {
-        this.connectionListener = object : ConnectionListener {
+    fun setConnectionEstablishListener(onEstablish: (ParcelFileDescriptor) -> Unit) {
+        this.connectionEstablishListener = object : ConnectionEstablishListener {
             override fun onEstablish(tunInterface: ParcelFileDescriptor) {
                 onEstablish(tunInterface)
             }
@@ -52,7 +52,7 @@ class SkeletonVpnConnection(
             val serverConfig = ToyVpnServerUtils().handshake(tunnel, sharedSecret)
             tunInterface = getTunInterface(serverConfig)
 
-            VpnProcessor().run(tunnel, tunInterface)
+            VpnProcessor(connectionId).run(tunnel, tunInterface)
         } finally {
             tunInterface?.close()
             tunnel?.disconnect()
@@ -73,6 +73,7 @@ class SkeletonVpnConnection(
     }
 
     private fun getTunInterface(serverConfig: ServerConfig): ParcelFileDescriptor {
+        Log.d(TAG, "getTunInterface: serverConfig = [$serverConfig]")
         val tunBuilder = sVpnService.Builder().run {
             addAddress(serverConfig.Address.first, serverConfig.Address.second)
             addRoute(serverConfig.Route.first, serverConfig.Route.second)
@@ -82,7 +83,7 @@ class SkeletonVpnConnection(
 
         tunBuilder.establish()?.let {
             Log.i(TAG, "configure: Established new tun interface : $it")
-            synchronized(sVpnService) { connectionListener.onEstablish(it) }
+            synchronized(sVpnService) { connectionEstablishListener.onEstablish(it) }
 
             return it
         }

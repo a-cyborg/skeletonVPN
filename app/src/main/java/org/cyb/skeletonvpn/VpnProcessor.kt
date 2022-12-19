@@ -1,6 +1,7 @@
 package org.cyb.skeletonvpn
 
 import android.os.ParcelFileDescriptor
+import android.util.Log
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -11,14 +12,17 @@ import java.nio.ByteBuffer
 import java.nio.channels.DatagramChannel
 import java.nio.channels.FileChannel
 
-class VpnProcessor {
+class VpnProcessor(val connectionId: Int) {
     private val TAG = VpnProcessor::class.java.simpleName
 
     private val MAX_PACKET_SIZE = Short.MAX_VALUE.toInt()
 
     private val packet = ByteBuffer.allocate(MAX_PACKET_SIZE)
 
-    fun run(tunnel: DatagramChannel, tun: ParcelFileDescriptor): Unit = runBlocking {
+    fun run(
+        tunnel: DatagramChannel,
+        tun: ParcelFileDescriptor
+    ): Unit = runBlocking {
         // Packets to be sent are queued in this input stream.
         val inputStream = FileInputStream(tun.fileDescriptor).channel
         // Packets received need to be written to this output stream.
@@ -28,6 +32,8 @@ class VpnProcessor {
             readFromTunWriteToTunnel(inputStream, tunnel)
             readFromTunnelWriteToTun(outputStream, tunnel)
         }
+
+        Log.i(TAG, "run: Reached end of the process for the connection [$connectionId].")
     }
 
     private suspend fun readFromTunWriteToTunnel(

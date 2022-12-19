@@ -55,7 +55,7 @@ class SkeletonVpnService : VpnService() {
             with(Thread(connection, "SkeletonVpnThread")) {
                 makeSureOneThread(this)
 
-                connection.setConnectionOnEstablishListener { tunInterface ->
+                connection.setConnectionEstablishListener { tunInterface ->
                     updateNotification(R.string.connected, this@SkeletonVpnService)
                     removeThisThreadFromRef(this)
                     makeSureOnePair(Pair(this, tunInterface))
