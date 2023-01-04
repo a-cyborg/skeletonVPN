@@ -1,4 +1,4 @@
-package org.cyb.skeletonvpn.util
+package org.cyb.skeletonvpn.utils
 
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue

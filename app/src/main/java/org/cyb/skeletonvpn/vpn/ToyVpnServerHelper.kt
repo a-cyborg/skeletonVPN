@@ -1,25 +1,13 @@
-package org.cyb.skeletonvpn.util
+package org.cyb.skeletonvpn.vpn
 
-import android.util.Log
+import org.cyb.skeletonvpn.models.TunConfigData
 import java.nio.ByteBuffer
 import java.nio.channels.DatagramChannel
 import java.util.concurrent.TimeoutException
 
-class ToyVpnServerUtils {
-    private val TAG = this::class.java.simpleName
+class ToyVpnServerHelper {
 
-    companion object {
-        private const val HANDSHAKE_PACKET_SIZE = 1024
-        private const val MAX_HANDSHAKE_ATTEMPTS = 50
-        private const val PREFIX_CONTROL_PACKET = 0
-        private const val INTERVAL_MS: Long = 100
-
-        fun isControlPacket(firstByte: Byte): Boolean {
-            return firstByte.toInt() == PREFIX_CONTROL_PACKET
-        }
-    }
-
-    fun handshake(tunnel: DatagramChannel, sharedSecret: String): ServerConfig {
+    fun handshake(tunnel: DatagramChannel, sharedSecret: String): TunConfigData {
         val packet = getHandshakePacket(sharedSecret)
 
         // Send packet 3 times in case of packet loss.
@@ -49,9 +37,8 @@ class ToyVpnServerUtils {
     }
 
     @Throws
-    private fun parseParams(params: String): ServerConfig {
+    private fun parseParams(params: String): TunConfigData {
         val trimmedParams = params.trim().drop(1)  // Drop control prefix.
-        Log.d(TAG, "parseParams: params = $trimmedParams")
 
         var address: Pair<String, Int>? = null
         var mtu: Int? = null
@@ -69,6 +56,17 @@ class ToyVpnServerUtils {
             }
         }
 
-        return ServerConfig(address!!, route!!, mtu!!, dns!!)
+        return TunConfigData(address!!, route!!, mtu!!, dns!!)
+    }
+
+    companion object {
+        private const val HANDSHAKE_PACKET_SIZE = 1024
+        private const val MAX_HANDSHAKE_ATTEMPTS = 50
+        private const val PREFIX_CONTROL_PACKET = 0
+        private const val INTERVAL_MS: Long = 100
+
+        fun isControlPacket(firstByte: Byte): Boolean {
+            return firstByte.toInt() == PREFIX_CONTROL_PACKET
+        }
     }
 }

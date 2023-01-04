@@ -1,21 +1,18 @@
-package org.cyb.skeletonvpn
+package org.cyb.skeletonvpn.vpn
 
 import android.os.ParcelFileDescriptor
-import android.util.Log
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.cyb.skeletonvpn.util.ToyVpnServerUtils
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.nio.ByteBuffer
 import java.nio.channels.DatagramChannel
 import java.nio.channels.FileChannel
 
-class VpnProcessor(val connectionId: Int) {
-    private val TAG = VpnProcessor::class.java.simpleName
+private const val MAX_PACKET_SIZE = Short.MAX_VALUE.toInt()
 
-    private val MAX_PACKET_SIZE = Short.MAX_VALUE.toInt()
+class VpnProcessor {
 
     private val packet = ByteBuffer.allocate(MAX_PACKET_SIZE)
 
@@ -30,10 +27,8 @@ class VpnProcessor(val connectionId: Int) {
 
         while (true) {
             readFromTunWriteToTunnel(inputStream, tunnel)
-            readFromTunnelWriteToTun(outputStream, tunnel)
+            readFromTunnelWriteToTun(tunnel, outputStream)
         }
-
-        Log.i(TAG, "run: Reached end of the process for the connection [$connectionId].")
     }
 
     private suspend fun readFromTunWriteToTunnel(
@@ -50,8 +45,8 @@ class VpnProcessor(val connectionId: Int) {
     }
 
     private suspend fun readFromTunnelWriteToTun(
-        outputStream: FileOutputStream,
         tunnel: DatagramChannel,
+        outputStream: FileOutputStream,
     ) = coroutineScope {
         launch {
             tunnel.read(packet).let { bytesRead ->
@@ -74,5 +69,5 @@ class VpnProcessor(val connectionId: Int) {
     }
 
     private fun isControlPacket(firstByre: Byte): Boolean =
-        ToyVpnServerUtils.isControlPacket(firstByre)
+        ToyVpnServerHelper.isControlPacket(firstByre)
 }
