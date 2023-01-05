@@ -59,5 +59,5 @@ or create a tun interface and set the NAT rules manually.
 ```
 
 ## Screenshots
-![Main1](/screenshots/skeletonvpn_screen1.png)
-![Main2](/screenshots/skeletonvpn_screen2.png)
+<img src="/screenshots/skeletonvpn_screen1.png" alt="main1" width="250"/>
+<img src="/screenshots/skeletonvpn_screen2.png" alt="main2" width="250"/>
