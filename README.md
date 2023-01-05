@@ -59,5 +59,5 @@ or create a tun interface and set the NAT rules manually.
 ```
 
 ## Screenshots
-![Main1](https://gitlab.com/a-cyborg/skeletonvpn/-/blob/main/screenshots/skeletonvpn_screen1.png)
-![Main2](https://gitlab.com/a-cyborg/skeletonvpn/-/blob/main/screenshots/skeletonvpn_screen2.png)
+![Main1](/screenshots/skeletonvpn_screen1.png)
+![Main2](/screenshots/skeletonvpn_screen2.png)
